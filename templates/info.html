@@ -1,0 +1,7 @@
+<!-- Info is a child template that extends index; it imports all metadata from index -->
+{% extends "index.html" %} {% block content %}
+<h1>Historical Stock Data for {{ info.company_name }}</h1>
+<h2>Ticker symbol: {{ info.symbol|upper }}</h2>
+{{ info.graph }}
+<button><a href="/">Go back</a></button>
+{% endblock %}
