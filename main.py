@@ -92,6 +92,13 @@ def login():
     
     return render_template("login.html")
 
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'GET':
+        return redirect('/') # Redirects user to root page if they don't use the form
+    
+    return render_template("register.html")
+
 # Helper function to create graph
 def get_graph(dates, prices, company_name):
     fig, ax = plt.subplots(figsize=(8, 6))
