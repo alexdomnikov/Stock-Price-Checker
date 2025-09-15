@@ -1,15 +1,19 @@
+# Standard library
 import os
-import requests
 from io import StringIO
-
-from flask import Flask, render_template, request, redirect, url_for
-from markupsafe import Markup
-from dotenv import load_dotenv
 from datetime import datetime as dt
 
+# Third-party libraries
+import requests
+from dotenv import load_dotenv
+from flask_login import LoginManager
+from flask import Flask, render_template, request, redirect, url_for
+from markupsafe import Markup
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+
+# Configures matplotlib backend
 matplotlib.use('Agg')
 
 # Loads .env file, grabs the API key from the .env file
