@@ -10,11 +10,11 @@ from flask_login import LoginManager
 from flask import Flask, render_template, request, redirect, url_for
 from markupsafe import Markup
 import matplotlib
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-
-# Configures matplotlib backend
+# Configures matplotlib backend. 
+# Matplotlib recommends calling this before importing pyplot.
 matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+# import matplotlib.dates as mdates -- Use if we want more granular date formatting
 
 # Loads .env file, grabs the API key from the .env file
 load_dotenv()
@@ -84,6 +84,13 @@ def info():
         "symbol": symbol,
         "graph": Markup(graph)
     })
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'GET':
+        return redirect('/') # Redirects user to root page if they don't use the form
+    
+    return render_template("login.html")
 
 # Helper function to create graph
 def get_graph(dates, prices, company_name):
