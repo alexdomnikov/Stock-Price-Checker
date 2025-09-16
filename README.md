@@ -16,6 +16,18 @@ I'm continuing to improve it by adding more styling (CSS) and considering new fe
 
 ---
 
+## Key Learnings
+
+Building this project was a significant step in my journey as a developer. It taught me invaluable lessons in software development and practical application of new technologies. Some of my key takeaways include:
+
+- **Understanding the MVC Pattern**: I learned how to structure a web application using the Model-View-Controller (MVC) pattern, separating the application's logic (Flask), data handling (SQLAlchemy), and user interface (Jinja2 templates).
+- **Working with Third-Party APIs**: This project was my first experience integrating a third-party API. I learned how to make HTTP requests, parse JSON responses, and handle errors (e.g., for an invalid stock ticker).
+- **Data Visualization with Matplotlib**: I gained hands-on experience in using Matplotlib to create dynamic charts from raw data. This included preparing the data for plotting and saving the generated chart to be rendered in the web page.
+- **User Authentication and Security**: The most challenging and rewarding part was implementing user authentication. I learned the importance of secure password storage using bcrypt and how to manage user sessions and protect routes with Flask-Login.
+- **Project Structure and Best Practices**: Beyond the code, I learned how to manage a project by using a requirements.txt file, handling sensitive information with a .env file, and writing a comprehensive README to guide other users.
+
+---
+
 ## Features
 - Search for any stock ticker symbol  
 - Fetch historical data from the Alpha Vantage API  
