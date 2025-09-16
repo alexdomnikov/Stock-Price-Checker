@@ -7,10 +7,10 @@ from datetime import datetime as dt
 import requests
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect, url_for
-from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import UserMixin
+from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
+from flask_bcrypt import Bcrypt
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import InputRequired, Length, ValidationError
 from markupsafe import Markup
@@ -42,6 +42,18 @@ DB_PATH = os.path.join(BASE_DIR, "database.db")
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{DB_PATH}"
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
 db = SQLAlchemy(app)
+
+# Initialize bcrypt to enable password hashing and verification
+bcrypt = Bcrypt(app)
+
+# login_manager allows our app to work with flask to handle logging in
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"
+
+@login_manager.user_loader
+def load_user(user_id):
+    return db.session.get(User, int(user_id))
 
 # Create user class
 class User(db.Model, UserMixin):
@@ -137,11 +149,43 @@ def info():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     logForm = LoginForm()
+
+    if logForm.validate_on_submit():
+        # First check if user is in database
+        user = User.query.filter_by(username=logForm.username.data).first()
+        
+        # If user is in the database, check password hash
+        if user:
+            if bcrypt.check_password_hash(user.password, logForm.password.data):
+                login_user(user)
+                return redirect(url_for('dashboard'))
+
     return render_template("login.html", form=logForm)
+
+# Creating a route for the dashboard, which is only available if logged in
+@app.route('/dashboard', methods=['GET', 'POST'])
+@login_required
+def dashboard():
+    return render_template("dashboard.html")
+
+@app.route('/logout', methods=['GET', 'POST'])
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     regForm = RegisterForm()
+
+    # Need to hash the password so the app is secure, then create the new user
+    if regForm.validate_on_submit():
+        hashed_password = bcrypt.generate_password_hash(regForm.password.data)
+        new_user = User(username = regForm.username.data, password = hashed_password)
+        db.session.add(new_user)
+        db.session.commit()
+        return redirect(url_for('login'))
+
     return render_template("register.html", form=regForm)
 
 # Helper function to create graph
