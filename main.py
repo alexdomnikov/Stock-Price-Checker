@@ -89,7 +89,6 @@ min=4, max=20)], render_kw={"placeholder": "Password"})
     
     submit = SubmitField("Login")
 
-
 # Flask's route decorator maps URLs to a specific function
 @app.route('/')
 def index():
