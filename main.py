@@ -6,8 +6,13 @@ from datetime import datetime as dt
 # Third-party libraries
 import requests
 from dotenv import load_dotenv
-from flask_login import LoginManager
 from flask import Flask, render_template, request, redirect, url_for
+from flask_login import LoginManager
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import UserMixin
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, SubmitField
+from wtforms.validators import InputRequired, Length, ValidationError
 from markupsafe import Markup
 import matplotlib
 # Configures matplotlib backend. 
@@ -27,7 +32,51 @@ function_mapping = {
     "TIME_SERIES_MONTHLY" : "Monthly Time Series"
 }
 
+# Create Flask instance
 app = Flask(__name__)
+
+# Create database instance, connect to the DB file, get secret key from .env
+# Making database file path absolute to ensure I create tables in the same file I open with sqlite
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+DB_PATH = os.path.join(BASE_DIR, "database.db")
+app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{DB_PATH}"
+app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
+db = SQLAlchemy(app)
+
+# Create user class
+class User(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(20), nullable=False, unique=True)
+    # Password length set to 80 because we don't know how long the hash will be
+    password = db.Column(db.String(80), nullable=False)
+
+# Create registration form
+class RegisterForm(FlaskForm):
+    username = StringField(validators=[InputRequired(), Length(
+min=4, max=20)], render_kw={"placeholder": "Username"})
+    
+    password = PasswordField(validators=[InputRequired(), Length(
+min=4, max=20)], render_kw={"placeholder": "Password"})
+    
+    submit = SubmitField("Register")
+
+    def validate_username(self, username):
+        existing_user_username = User.query.filter_by(
+            username=username.data).first()
+        
+        if existing_user_username:
+            raise ValidationError("Username taken. Please choose a different one.")
+    
+# Create login form
+class LoginForm(FlaskForm):
+    username = StringField(validators=[InputRequired(), Length(
+min=4, max=20)], render_kw={"placeholder": "Username"})
+    
+    password = PasswordField(validators=[InputRequired(), Length(
+min=4, max=20)], render_kw={"placeholder": "Password"})
+    
+    submit = SubmitField("Login")
+
 
 # Flask's route decorator maps URLs to a specific function
 @app.route('/')
@@ -87,17 +136,13 @@ def info():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'GET':
-        return redirect('/') # Redirects user to root page if they don't use the form
-    
-    return render_template("login.html")
+    logForm = LoginForm()
+    return render_template("login.html", form=logForm)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    if request.method == 'GET':
-        return redirect('/') # Redirects user to root page if they don't use the form
-    
-    return render_template("register.html")
+    regForm = RegisterForm()
+    return render_template("register.html", form=regForm)
 
 # Helper function to create graph
 def get_graph(dates, prices, company_name):

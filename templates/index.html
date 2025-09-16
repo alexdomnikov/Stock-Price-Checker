@@ -63,37 +63,7 @@
         <p>{{ error }}</p>
     {% endif %}
 
-    <form method="POST" action="login">
-        <p>Log in to see your watchlist.</p>
-
-        <div>
-            <label for="username">Username</label>
-            <input type="text" name="username" placeholder="Enter username">
-        </div>
-
-        <div>
-            <label for="password">Password</label>
-            <input type="text" name="password" placeholder="Enter password">
-        </div>
-
-        <button type="login">Log in</button>
-    </form>
-
-    <form method="POST" action="register">
-        <p>Create an account.</p>
-
-        <div>
-            <label for="username">Username</label>
-            <input type="text" name="username" placeholder="Enter username">
-        </div>
-
-        <div>
-            <label for="password">Password</label>
-            <input type="text" name="password" placeholder="Enter password">
-        </div>
-
-        <button type="register">Log in</button>
-    </form>
+    <a href="{{url_for('login')}}">Log in to see your watchlist.</a>
 
     {% endblock %}
 </body>
