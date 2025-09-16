@@ -3,14 +3,16 @@
 A simple Flask web app for checking stock prices and generating historical price charts.
 
 ## Overview
-This project was my first foray into building a "real" software project outside the classroom.  
-It started as a tutorial project and taught me:
+This originally started as an introductory project where I followed a tutorial. The tutorial tutorial taught me:
 - The basics of Flask and web development
 - How to work with third-party APIs (Alpha Vantage)
 - Generating graphs with Matplotlib
 - Using HTML & Jinja2 templates to display dynamic content
 
-I'm continuing to improve it by adding more styling (CSS) and considering new features like user authentication and watchlists.
+Following the tutorial project, I added the following features:
+- User creation/authentication and secure password storage using Flask-bcrypt, Flask-login, SQAlchemy, and SQLite
+
+I'm continuing to improve it by adding more styling (CSS) and considering new features like watchlists.
 
 ---
 
@@ -19,6 +21,8 @@ I'm continuing to improve it by adding more styling (CSS) and considering new fe
 - Fetch historical data from the Alpha Vantage API  
 - Generate and display historical stock price charts  
 - Error handling for invalid input  
+- User creation & secure password storage
+- User authentication
 
 ---
 
@@ -37,8 +41,9 @@ I'm continuing to improve it by adding more styling (CSS) and considering new fe
    git clone https://github.com/alexdomnikov/Stock-Price-Checker.git
    cd Stock-Price-Checker
 
-2. Create a .env file in your root directory and add your Alpha Vantage API key:
+2. Create a .env file in your root directory and add your Alpha Vantage API key + secret key:
 AV_KEY={{your_API_key_here}}
+SECRET_KEY={{a_secret_key_you_create_here}}
 
 3. Install dependencies
 pip install -r requirements.txt
@@ -65,7 +70,6 @@ ___
 
 ## Future Plans
 - Add CSS styling for a better UI/UX
-- Implement user login & signup
 - Allow users to watchlist stocks
 
 ___
