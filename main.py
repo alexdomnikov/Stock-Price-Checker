@@ -62,32 +62,38 @@ class User(db.Model, UserMixin):
     # Password length set to 80 because we don't know how long the hash will be
     password = db.Column(db.String(80), nullable=False)
 
-# Create registration form
-class RegisterForm(FlaskForm):
+    # Creates a relationship with the watchlist model to easily access a user's watchlist
+    watchlist = db.relationship('Watchlist', backref='owner', lazy='dynamic')
+
+# Create watchlist class. Could've stored info as a JSON, but this allows users to add/delete a stock without 
+# having to read the entire dictionary from the database, modify it, then add the modified dictionary back.
+class Watchlist(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    # Foreign key will link the watchlist to the user
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    symbol = db.Column(db.String(10), nullable=False)
+
+    price_today = db.Column(db.Float)
+    price_yesterday = db.Column(db.Float)
+    price_year_start = db.Column(db.Float)
+    price_year_ago = db.Column(db.Float)
+
+# Create an authentication form - we're going to use this for both registering and logging in
+class AuthForm(FlaskForm):
     username = StringField(validators=[InputRequired(), Length(
-min=4, max=20)], render_kw={"placeholder": "Username"})
+        min=4, max=20)], render_kw={"placeholder": "Username"})
     
     password = PasswordField(validators=[InputRequired(), Length(
-min=4, max=20)], render_kw={"placeholder": "Password"})
+        min=4, max=20)], render_kw={"placeholder": "Password"})
     
-    submit = SubmitField("Register")
+    login_submit = SubmitField("Login")
+    register_submit = SubmitField("Register")
 
     def validate_username(self, username):
-        existing_user_username = User.query.filter_by(
-            username=username.data).first()
-        
-        if existing_user_username:
-            raise ValidationError("Username taken. Please choose a different one.")
-    
-# Create login form
-class LoginForm(FlaskForm):
-    username = StringField(validators=[InputRequired(), Length(
-min=4, max=20)], render_kw={"placeholder": "Username"})
-    
-    password = PasswordField(validators=[InputRequired(), Length(
-min=4, max=20)], render_kw={"placeholder": "Password"})
-    
-    submit = SubmitField("Login")
+        # We'll use this during a registration attempt
+        # We'll handle the login directly in the login route
+        pass
+
 
 # Flask's route decorator maps URLs to a specific function
 @app.route('/')
@@ -147,19 +153,42 @@ def info():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    logForm = LoginForm()
+    form = AuthForm()
+    error = None
 
-    if logForm.validate_on_submit():
-        # First check if user is in database
-        user = User.query.filter_by(username=logForm.username.data).first()
-        
-        # If user is in the database, check password hash
-        if user:
-            if bcrypt.check_password_hash(user.password, logForm.password.data):
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
+
+        # ***LOGIN LOGIC***
+        if form.login_submit.data:
+            # First check if user is in database
+            user = User.query.filter_by(username=username).first()
+            
+            # If user is in the database, check password hash
+            if user and bcrypt.check_password_hash(user.password, password):
                 login_user(user)
                 return redirect(url_for('dashboard'))
+            else:
+                error = "Failed login attempt. Username or password incorrect."
 
-    return render_template("login.html", form=logForm)
+        # ***REGISTRATION LOGIC***
+        elif form.register_submit.data:
+            # Check if username is taken
+            existing_user = User.query.filter_by(username=username).first()
+        
+            if existing_user:
+                error = "Username taken. Please choose a different one."
+            else:
+                hashed_password = bcrypt.generate_password_hash(form.password.data)
+                new_user = User(username = username, password = hashed_password)
+                db.session.add(new_user)
+                db.session.commit()
+
+                login_user(new_user) # Log user in automatically, direct to dashboard.
+                return redirect(url_for('dashboard')) 
+        
+    return render_template("login.html", form=form, error=error)
 
 # Creating a route for the dashboard, which is only available if logged in
 @app.route('/dashboard', methods=['GET', 'POST'])
@@ -172,20 +201,6 @@ def dashboard():
 def logout():
     logout_user()
     return redirect(url_for('index'))
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    regForm = RegisterForm()
-
-    # Need to hash the password so the app is secure, then create the new user
-    if regForm.validate_on_submit():
-        hashed_password = bcrypt.generate_password_hash(regForm.password.data)
-        new_user = User(username = regForm.username.data, password = hashed_password)
-        db.session.add(new_user)
-        db.session.commit()
-        return redirect(url_for('login'))
-
-    return render_template("register.html", form=regForm)
 
 # Helper function to create graph
 def get_graph(dates, prices, company_name):
