@@ -94,7 +94,6 @@ class AuthForm(FlaskForm):
         # We'll handle the login directly in the login route
         pass
 
-
 # Flask's route decorator maps URLs to a specific function
 @app.route('/')
 def index():
