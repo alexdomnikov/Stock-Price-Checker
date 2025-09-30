@@ -1,7 +1,9 @@
+# TODO: Check if user hit API rate limits when they access info, check for other possible API errors, add button/function to delete name from watchlist
+
 # Standard library
 import os
 from io import StringIO
-from datetime import datetime as dt
+from datetime import timedelta, datetime as dt
 
 # Third-party libraries
 import requests
@@ -73,9 +75,9 @@ class Watchlist(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     symbol = db.Column(db.String(10), nullable=False)
 
+    date_retrieved = db.Column(db.DateTime, nullable=True)
     price_today = db.Column(db.Float)
     price_yesterday = db.Column(db.Float)
-    price_year_start = db.Column(db.Float)
     price_year_ago = db.Column(db.Float)
 
 # Create an authentication form - we're going to use this for both registering and logging in
@@ -193,7 +195,63 @@ def login():
 @app.route('/dashboard', methods=['GET', 'POST'])
 @login_required
 def dashboard():
-    return render_template("dashboard.html")
+    error = None
+    # ADD STOCK LOGIC (POST request)
+    if request.method == 'POST':
+        symbol = request.form['symbol'].upper()
+
+        # 1. Check if watchlist is full (max 5 since this is just a simple project)
+        if current_user.watchlist.count() >= 5:
+            error = "Watchlist is full. You can only have up to 5 stocks."
+        # 2. Check if stock is already in the watchlist
+        elif any(stock.symbol == symbol for stock in current_user.watchlist):
+            error = f"{symbol} is already in your watchlist."
+        else:
+            # 3. Validate ticker by checking if the API returns a company name
+            overview_url = f"https://www.alphavantage.co/query?function=OVERVIEW&symbol={symbol}&apikey={AV_KEY}"
+            overview_data = requests.get(overview_url).json()
+            
+            # User might encounter an error where they've hit an API call limit
+            if "Information" in overview_data or "Note" in overview_data:
+                error = overview_data.get("Note") or overview_data.get("Information")
+            elif 'Name' not in overview_data or overview_data['Name'] is None:
+                error = f"'{symbol}' is not a valid stock symbol."
+            else:
+                # 4. Fetch historical data for the new stock
+                url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&outputsize=full&apikey={AV_KEY}"
+                response = requests.get(url).json()
+                time_series = response.get("Time Series (Daily)")
+                
+                prices = get_relevant_prices(time_series) if time_series else None
+                
+                if prices:
+                    # 5. Create new Watchlist entry and add to DB
+                    new_stock = Watchlist(
+                        user_id=current_user.id,
+                        symbol=symbol,
+                        date_retrieved=dt.utcnow(),
+                        price_today=prices["today"],
+                        price_yesterday=prices["yesterday"],
+                        price_year_ago=prices["year_ago"]
+                    )
+                    db.session.add(new_stock)
+                    db.session.commit()
+                    return redirect(url_for('dashboard')) # Redirect to clear form
+                else:
+                    # Adding check for API call limit error
+                    if "Information" in response or "Note" in response:
+                        error = overview_data.get("Note") or overview_data.get("Information")
+                    else:
+                        error = f"Could not retrieve price data for {symbol}."
+
+    # DISPLAY WATCHLIST LOGIC (GET request)
+    # Always update prices before displaying the dashboard
+    update_stock_prices(current_user)
+    
+    # Retrieve the (now updated) watchlist from the database
+    user_watchlist = current_user.watchlist.all()
+
+    return render_template("dashboard.html", watchlist=user_watchlist, error=error)
 
 @app.route('/logout', methods=['GET', 'POST'])
 @login_required
@@ -201,7 +259,7 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
-# Helper function to create graph
+# Helper function to create graph for when users look up a single name on the homepage
 def get_graph(dates, prices, company_name):
     fig, ax = plt.subplots(figsize=(8, 6))
  
@@ -216,6 +274,64 @@ def get_graph(dates, prices, company_name):
     plt.close(fig)
  
     return buf.getvalue()
+
+# Helper function to find the closest available trading day in the past. 
+# This will be used when we add names to watchlists and when we update them on login.
+def get_closest_date(time_series, target_date):
+    while target_date.strftime('%Y-%m-%d') not in time_series:
+        target_date -= timedelta(days=1)
+    return target_date.strftime('%Y-%m-%d')
+
+# Helper function to parse API data and retrieve relevant prices
+def get_relevant_prices(time_series):
+    try:
+        # Get the 2 most recent dates in the time series
+        latest_date_str = sorted(time_series.keys(), reverse=True)[0]
+        previous_date_str = sorted(time_series.keys(), reverse=True)[1]
+
+        # Define target dates
+        today = dt.now().date()
+        year_ago_target = today - timedelta(days=365)
+
+        # Find the closest actual trading days in the dataset
+        year_ago_date_str = get_closest_date(time_series, year_ago_target)
+
+        # Extract closing prices for those dates
+        prices = {
+            "today": float(time_series[latest_date_str]['4. close']),
+            "yesterday": float(time_series[previous_date_str]['4. close']),
+            "year_ago": float(time_series[year_ago_date_str]['4. close'])
+        }
+        return prices
+    except (KeyError, IndexError):
+        # Return None if the data is incomplete or in an unexpected format
+        return None
+
+# Function to update prices for all stocks in a user's watchlist
+def update_stock_prices(user):
+    today = dt.now().date()
+    stocks_to_update = [stock for stock in user.watchlist if stock.date_retrieved.date() != today]
+
+    for stock in stocks_to_update:
+        # We use outputsize=full to ensure we have data for a year ago and YTD
+        url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={stock.symbol}&outputsize=full&apikey={AV_KEY}"
+        response = requests.get(url).json()
+        
+        time_series = response.get("Time Series (Daily)")
+        if not time_series:
+            # Skip if API fails or returns no data for this stock
+            continue
+        
+        prices = get_relevant_prices(time_series)
+        if prices:
+            stock.date_retrieved = dt.utcnow()
+            stock.price_today = prices["today"]
+            stock.price_yesterday = prices["yesterday"]
+            stock.price_year_ago = prices["year_ago"]
+
+    # Commit all changes to the database at once after the loop
+    if stocks_to_update:
+        db.session.commit()
 
 if __name__ == '__main__':
     app.run(debug=True)

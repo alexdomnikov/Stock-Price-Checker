@@ -1,9 +1,70 @@
-<!-- Info is a child template that extends index; it imports all metadata from index -->
-{% extends "index.html" %} {% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Dashboard</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        .positive { color: green; }
+        .negative { color: red; }
+        .error { color: red; font-weight: bold; }
+        table { border-collapse: collapse; width: 80%; margin-top: 20px; }
+        th, td { border: 1px solid #dddddd; text-align: left; padding: 8px; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>Welcome, {{ current_user.username }}!</h1>
+    <a href="{{ url_for('logout') }}">Logout</a>
+    
+    <hr>
 
-<title>Dashboard</title>
+    <h2>Add Stock to Watchlist</h2>
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% endif %}
 
-<h1>Hello! You are logged in.</h1>
+    <form method="POST" action="{{ url_for('dashboard') }}">
+        <input type="text" name="symbol" placeholder="Enter Stock Symbol (e.g., AAPL)" required>
+        <button type="submit">Add Stock</button>
+    </form>
+    
+    <hr>
 
-<a href="{{url_for('logout')}}">Press here to logout.</a>
-{% endblock %}
+    <h2>My Watchlist</h2>
+    {% if watchlist %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Current Price</th>
+                    <th>1-Day Return</th>
+                    <th>1-Year Return</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stock in watchlist %}
+                    <tr>
+                        <td><strong>{{ stock.symbol }}</strong></td>
+                        <td>${{ "%.2f"|format(stock.price_today) }}</td>
+                        
+                        {% set daily_return = ((stock.price_today / stock.price_yesterday - 1) * 100) %}
+                        <td class="{{ 'positive' if daily_return >= 0 else 'negative' }}">
+                            {{ "%.2f"|format(daily_return) }}%
+                        </td>
+
+                        {% set yearly_return = ((stock.price_today / stock.price_year_ago - 1) * 100) %}
+                        <td class="{{ 'positive' if yearly_return >= 0 else 'negative' }}">
+                            {{ "%.2f"|format(yearly_return) }}%
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Your watchlist is empty. Add a stock to get started!</p>
+    {% endif %}
+
+</body>
+</html>
