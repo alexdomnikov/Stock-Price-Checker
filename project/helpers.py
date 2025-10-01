@@ -1,0 +1,89 @@
+
+# Standard library
+from io import StringIO
+from datetime import timedelta, date
+
+# Importing dt from routes
+from .routes import dt
+
+# Third-party libraries
+import matplotlib
+# Configures matplotlib backend. 
+# Matplotlib recommends calling this before importing pyplot.
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+# import matplotlib.dates as mdates -- Use if we want more granular date formatting
+
+# Helper function to create graph for when users look up a single name on the homepage
+def get_graph(dates, prices, company_name):
+    fig, ax = plt.subplots(figsize=(8, 6))
+ 
+    ax.xaxis.set_tick_params(rotation=45)
+    ax.set_title(f"Stock Price of {company_name}")
+    ax.set_xlabel("Year")
+    ax.set_ylabel("Price (USD)")
+    ax.plot(dates, prices)
+ 
+    buf = StringIO()
+    fig.savefig(buf, format="svg")
+    plt.close(fig)
+ 
+    return buf.getvalue()
+
+# Helper function to find the closest available trading day in the past. 
+# This will be used when we add names to watchlists and when we update them on login.
+def get_closest_date(time_series, target_date):
+    while target_date.strftime('%Y-%m-%d') not in time_series:
+        target_date -= timedelta(days=1)
+    return target_date.strftime('%Y-%m-%d')
+
+# Helper function to parse API data and retrieve relevant prices
+def get_relevant_prices(time_series):
+    try:
+        # Get the 2 most recent dates in the time series
+        latest_date_str = sorted(time_series.keys(), reverse=True)[0]
+        previous_date_str = sorted(time_series.keys(), reverse=True)[1]
+
+        # Define target dates
+        today = dt.now().date()
+        year_ago_target = today - timedelta(days=365)
+
+        # Find the closest actual trading days in the dataset
+        year_ago_date_str = get_closest_date(time_series, year_ago_target)
+
+        # Extract closing prices for those dates
+        prices = {
+            "today": float(time_series[latest_date_str]['4. close']),
+            "yesterday": float(time_series[previous_date_str]['4. close']),
+            "year_ago": float(time_series[year_ago_date_str]['4. close'])
+        }
+        return prices
+    except (KeyError, IndexError):
+        # Return None if the data is incomplete or in an unexpected format
+        return None
+    
+# Function to update prices for all stocks in a user's watchlist
+def update_stock_prices(user):
+    today = dt.now().date()
+    stocks_to_update = [stock for stock in user.watchlist if stock.date_retrieved.date() != today]
+
+    for stock in stocks_to_update:
+        # We use outputsize=full to ensure we have data for a year ago and YTD
+        url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={stock.symbol}&outputsize=full&apikey={AV_KEY}"
+        response = requests.get(url).json()
+        
+        time_series = response.get("Time Series (Daily)")
+        if not time_series:
+            # Skip if API fails or returns no data for this stock
+            continue
+        
+        prices = get_relevant_prices(time_series)
+        if prices:
+            stock.date_retrieved = dt.utcnow()
+            stock.price_today = prices["today"]
+            stock.price_yesterday = prices["yesterday"]
+            stock.price_year_ago = prices["year_ago"]
+
+    # Commit all changes to the database at once after the loop
+    if stocks_to_update:
+        db.session.commit()

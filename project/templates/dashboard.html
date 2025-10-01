@@ -16,7 +16,7 @@
 </head>
 <body>
     <h1>Welcome, {{ current_user.username }}!</h1>
-    <a href="{{ url_for('logout') }}">Logout</a>
+    <a href="{{ url_for('routes.logout') }}">Logout</a>
     
     <hr>
 
@@ -25,7 +25,7 @@
         <p class="error">{{ error }}</p>
     {% endif %}
 
-    <form method="POST" action="{{ url_for('dashboard') }}">
+    <form method="POST" action="{{ url_for('routes.dashboard') }}">
         <input type="text" name="symbol" placeholder="Enter Stock Symbol (e.g., AAPL)" required>
         <button type="submit">Add Stock</button>
     </form>
@@ -60,7 +60,7 @@
                         </td>
 
                         <td>
-                            <form method="POST" action="{{ url_for('dashboard') }}" style="display:inline;">
+                            <form method="POST" action="{{ url_for('routes.dashboard') }}" style="display:inline;">
                                 <input type="hidden" name="action" value="delete">
                                 <input type="hidden" name="stock_id" value="{{ stock.id }}">
                                 <button type="submit" class="btn btn-danger btn-sm">Delete</button>
