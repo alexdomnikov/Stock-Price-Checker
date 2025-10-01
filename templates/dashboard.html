@@ -58,6 +58,14 @@
                         <td class="{{ 'positive' if yearly_return >= 0 else 'negative' }}">
                             {{ "%.2f"|format(yearly_return) }}%
                         </td>
+
+                        <td>
+                            <form method="POST" action="{{ url_for('dashboard') }}" style="display:inline;">
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="stock_id" value="{{ stock.id }}">
+                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                            </form>
+                        </td>
                     </tr>
                 {% endfor %}
             </tbody>

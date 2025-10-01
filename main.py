@@ -1,4 +1,4 @@
-# TODO: Check if user hit API rate limits when they access info, check for other possible API errors, add button/function to delete name from watchlist
+# TODO: Check if user hit API rate limits when they access info, check for other possible API errors
 
 # Standard library
 import os
@@ -198,51 +198,65 @@ def dashboard():
     error = None
     # ADD STOCK LOGIC (POST request)
     if request.method == 'POST':
-        symbol = request.form['symbol'].upper()
+        if 'action' in request.form and request.form['action'] == 'delete':
+            stock_id = request.form.get('stock_id')
 
-        # 1. Check if watchlist is full (max 5 since this is just a simple project)
-        if current_user.watchlist.count() >= 5:
-            error = "Watchlist is full. You can only have up to 5 stocks."
-        # 2. Check if stock is already in the watchlist
-        elif any(stock.symbol == symbol for stock in current_user.watchlist):
-            error = f"{symbol} is already in your watchlist."
+            if(stock_id):
+                stock_to_delete = Watchlist.query.filter_by(
+                    id = stock_id,
+                    user_id = current_user.id
+                ).first()
+
+            if(stock_to_delete):
+                db.session.delete(stock_to_delete)
+                db.session.commit()
+                return redirect(url_for('dashboard'))
         else:
-            # 3. Validate ticker by checking if the API returns a company name
-            overview_url = f"https://www.alphavantage.co/query?function=OVERVIEW&symbol={symbol}&apikey={AV_KEY}"
-            overview_data = requests.get(overview_url).json()
-            
-            # User might encounter an error where they've hit an API call limit
-            if "Information" in overview_data or "Note" in overview_data:
-                error = overview_data.get("Note") or overview_data.get("Information")
-            elif 'Name' not in overview_data or overview_data['Name'] is None:
-                error = f"'{symbol}' is not a valid stock symbol."
+            symbol = request.form['symbol'].upper()
+
+            # 1. Check if watchlist is full (max 5 since this is just a simple project)
+            if current_user.watchlist.count() >= 5:
+                error = "Watchlist is full. You can only have up to 5 stocks."
+            # 2. Check if stock is already in the watchlist
+            elif any(stock.symbol == symbol for stock in current_user.watchlist):
+                error = f"{symbol} is already in your watchlist."
             else:
-                # 4. Fetch historical data for the new stock
-                url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&outputsize=full&apikey={AV_KEY}"
-                response = requests.get(url).json()
-                time_series = response.get("Time Series (Daily)")
+                # 3. Validate ticker by checking if the API returns a company name
+                overview_url = f"https://www.alphavantage.co/query?function=OVERVIEW&symbol={symbol}&apikey={AV_KEY}"
+                overview_data = requests.get(overview_url).json()
                 
-                prices = get_relevant_prices(time_series) if time_series else None
-                
-                if prices:
-                    # 5. Create new Watchlist entry and add to DB
-                    new_stock = Watchlist(
-                        user_id=current_user.id,
-                        symbol=symbol,
-                        date_retrieved=dt.utcnow(),
-                        price_today=prices["today"],
-                        price_yesterday=prices["yesterday"],
-                        price_year_ago=prices["year_ago"]
-                    )
-                    db.session.add(new_stock)
-                    db.session.commit()
-                    return redirect(url_for('dashboard')) # Redirect to clear form
+                # User might encounter an error where they've hit an API call limit
+                if "Information" in overview_data or "Note" in overview_data:
+                    error = overview_data.get("Note") or overview_data.get("Information")
+                elif 'Name' not in overview_data or overview_data['Name'] is None:
+                    error = f"'{symbol}' is not a valid stock symbol."
                 else:
-                    # Adding check for API call limit error
-                    if "Information" in response or "Note" in response:
-                        error = overview_data.get("Note") or overview_data.get("Information")
+                    # 4. Fetch historical data for the new stock
+                    url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&outputsize=full&apikey={AV_KEY}"
+                    response = requests.get(url).json()
+                    time_series = response.get("Time Series (Daily)")
+                    
+                    prices = get_relevant_prices(time_series) if time_series else None
+                    
+                    if prices:
+                        # 5. Create new Watchlist entry and add to DB
+                        new_stock = Watchlist(
+                            user_id=current_user.id,
+                            symbol=symbol,
+                            date_retrieved=dt.utcnow(),
+                            price_today=prices["today"],
+                            price_yesterday=prices["yesterday"],
+                            price_year_ago=prices["year_ago"]
+                        )
+                        db.session.add(new_stock)
+                        db.session.commit()
+                        return redirect(url_for('dashboard')) # Redirect to clear form
                     else:
-                        error = f"Could not retrieve price data for {symbol}."
+                        # Adding check for API call limit error
+                        if "Information" in response or "Note" in response:
+                            error = overview_data.get("Note") or overview_data.get("Information")
+                        else:
+                            error = f"Could not retrieve price data for {symbol}."
 
     # DISPLAY WATCHLIST LOGIC (GET request)
     # Always update prices before displaying the dashboard
