@@ -5,6 +5,7 @@ from datetime import timedelta, date
 
 # Importing dt from routes
 from .routes import dt
+from . import AV_KEY, db
 
 # Third-party libraries
 import matplotlib
@@ -13,6 +14,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 # import matplotlib.dates as mdates -- Use if we want more granular date formatting
+import requests
 
 # Helper function to create graph for when users look up a single name on the homepage
 def get_graph(dates, prices, company_name):

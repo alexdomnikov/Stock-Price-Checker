@@ -38,7 +38,10 @@ def info():
     company_overview=requests.get(overview_url).json()
 
     # Error handling, important if user enters invalid ticker
-    if 'Name' not in company_overview:
+    if "Information" in company_overview or "Note" in company_overview:
+        error = company_overview.get("Note") or company_overview.get("Information")
+        return redirect(url_for('routes.index', error = error))
+    elif 'Name' not in company_overview:
         return redirect(url_for('routes.index', error="Invalid ticker"))
     
     company_name = company_overview["Name"]

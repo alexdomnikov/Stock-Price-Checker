@@ -1,78 +1,90 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Dashboard</title>
-    <style>
-        body { font-family: sans-serif; margin: 2em; }
-        .positive { color: green; }
-        .negative { color: red; }
-        .error { color: red; font-weight: bold; }
-        table { border-collapse: collapse; width: 80%; margin-top: 20px; }
-        th, td { border: 1px solid #dddddd; text-align: left; padding: 8px; }
-        th { background-color: #f2f2f2; }
-    </style>
-</head>
-<body>
-    <h1>Welcome, {{ current_user.username }}!</h1>
-    <a href="{{ url_for('routes.logout') }}">Logout</a>
-    
-    <hr>
+{% extends "index.html" %}
+{% block content %}
 
-    <h2>Add Stock to Watchlist</h2>
-    {% if error %}
-        <p class="error">{{ error }}</p>
-    {% endif %}
+<div class="container mt-5">
+    <div class="row justify-content-between align-items-center mb-3">
+        <div class="col">
+            <h2>Welcome, {{ current_user.username }}!</h2>
+        </div>
+        <div class="col text-right">
+            <a href="{{ url_for('routes.logout') }}" class="btn btn-outline-secondary">Logout</a>
+        </div>
+    </div>
 
-    <form method="POST" action="{{ url_for('routes.dashboard') }}">
-        <input type="text" name="symbol" placeholder="Enter Stock Symbol (e.g., AAPL)" required>
-        <button type="submit">Add Stock</button>
-    </form>
-    
-    <hr>
+    <!-- Add Stock to Watchlist -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">Add Stock to Watchlist</h5>
+        </div>
+        <div class="card-body">
+            {% if error %}
+                <div class="alert alert-danger" role="alert">
+                    {{ error }}
+                </div>
+            {% endif %}
 
-    <h2>My Watchlist</h2>
-    {% if watchlist %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Symbol</th>
-                    <th>Current Price</th>
-                    <th>1-Day Return</th>
-                    <th>1-Year Return</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for stock in watchlist %}
-                    <tr>
-                        <td><strong>{{ stock.symbol }}</strong></td>
-                        <td>${{ "%.2f"|format(stock.price_today) }}</td>
-                        
-                        {% set daily_return = ((stock.price_today / stock.price_yesterday - 1) * 100) %}
-                        <td class="{{ 'positive' if daily_return >= 0 else 'negative' }}">
-                            {{ "%.2f"|format(daily_return) }}%
-                        </td>
+            <form method="POST" action="{{ url_for('routes.dashboard') }}" class="form-inline">
+                <div class="form-group mr-2 mb-2">
+                    <input type="text" name="symbol" class="form-control" placeholder="Enter Stock Symbol (e.g., AAPL)" required>
+                </div>
+                <button type="submit" class="btn btn-dark btn-toggle-outline mb-2">Add Stock</button>
+            </form>
+        </div>
+    </div>
 
-                        {% set yearly_return = ((stock.price_today / stock.price_year_ago - 1) * 100) %}
-                        <td class="{{ 'positive' if yearly_return >= 0 else 'negative' }}">
-                            {{ "%.2f"|format(yearly_return) }}%
-                        </td>
+    <!-- Watchlist Table -->
+    <div class="card shadow">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">My Watchlist</h5>
+        </div>
+        <div class="card-body p-0">
+            {% if watchlist %}
+                <div class="table-responsive">
+                    <table class="table table-striped mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Current Price</th>
+                                <th>1-Day Return</th>
+                                <th>1-Year Return</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stock in watchlist %}
+                                <tr>
+                                    <td><strong>{{ stock.symbol }}</strong></td>
+                                    <td>${{ "%.2f"|format(stock.price_today) }}</td>
+                                    
+                                    {% set daily_return = ((stock.price_today / stock.price_yesterday - 1) * 100) %}
+                                    <td class="{{ 'text-success' if daily_return >= 0 else 'text-danger' }}">
+                                        {{ "%.2f"|format(daily_return) }}%
+                                    </td>
 
-                        <td>
-                            <form method="POST" action="{{ url_for('routes.dashboard') }}" style="display:inline;">
-                                <input type="hidden" name="action" value="delete">
-                                <input type="hidden" name="stock_id" value="{{ stock.id }}">
-                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                            </form>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>Your watchlist is empty. Add a stock to get started!</p>
-    {% endif %}
+                                    {% set yearly_return = ((stock.price_today / stock.price_year_ago - 1) * 100) %}
+                                    <td class="{{ 'text-success' if yearly_return >= 0 else 'text-danger' }}">
+                                        {{ "%.2f"|format(yearly_return) }}%
+                                    </td>
 
-</body>
-</html>
+                                    <td>
+                                        <form method="POST" action="{{ url_for('routes.dashboard') }}" class="d-inline">
+                                            <input type="hidden" name="action" value="delete">
+                                            <input type="hidden" name="stock_id" value="{{ stock.id }}">
+                                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="p-3">
+                    <p class="mb-0 text-muted">Your watchlist is empty. Add a stock to get started!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

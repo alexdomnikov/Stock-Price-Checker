@@ -1,7 +1,23 @@
-<!-- Info is a child template that extends index; it imports all metadata from index -->
-{% extends "index.html" %} {% block content %}
-<h1>Historical Stock Data for {{ info.company_name }}</h1>
-<h2>Ticker symbol: {{ info.symbol|upper }}</h2>
-{{ info.graph }}
-<button><a href="/">Go back</a></button>
+{% extends "index.html" %}
+{% block content %}
+
+<div class="container mt-5">
+    <div class="card shadow">
+        <div class="card-header bg-dark text-white">
+            <h4 class="mb-0">Historical Stock Data</h4>
+        </div>
+
+        <div class="card-body">
+            <h5 class="card-title">Company: {{ info.company_name }}</h5>
+            <h6 class="card-subtitle mb-4 text-muted">Ticker Symbol: {{ info.symbol|upper }}</h6>
+
+            <div class="text-center mb-4">
+                {{ info.graph | safe }}
+            </div>
+
+            <a href="/" class="btn btn-outline-secondary">← Go Back</a>
+        </div>
+    </div>
+</div>
+
 {% endblock %}

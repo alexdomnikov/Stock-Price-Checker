@@ -1,31 +1,43 @@
-<!-- Login is a child template that extends index; it imports all metadata from index -->
-{% extends "index.html" %} {% block content %}
+{% extends "index.html" %}
+{% block content %}
 
-<h1>Login page</h1>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white">
+                    <h3 class="mb-0">Login</h3>
+                </div>
 
-{% if error %}
-        <p style="color: rgb(149, 0, 0); background-color: rgb(255, 156, 156); width:fit-content;">{{ error }}</p>
-{% endif %}
+                <div class="card-body">
+                    {% if error %}
+                        <div class="alert alert-danger" role="alert">
+                            {{ error }}
+                        </div>
+                    {% endif %}
 
-<form method="POST" action="">
-    {{ form.hidden_tag() }}
-    
-    <div>
-        {{ form.username.label }}
-        {{ form.username }}
+                    <form method="POST" action="">
+                        {{ form.hidden_tag() }}
+
+                        <div class="form-group">
+                            {{ form.username.label(class="form-label") }}
+                            {{ form.username(class="form-control") }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form.password.label(class="form-label") }}
+                            {{ form.password(class="form-control") }}
+                        </div>
+
+                        <div class="form-group mt-4 d-flex justify-content-between">
+                            {{ form.login_submit(class="btn btn-dark btn-toggle-outline") }}
+                            {{ form.register_submit(class="btn btn-outline-secondary btn-toggle-outline") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-    
-    <div>
-        {{ form.password.label }}
-        {{ form.password }}
-    </div>
-    
-    <div>
-        {{ form.login_submit }}
-        {{ form.register_submit }}
-    </div>
-</form>
-
-</form>
+</div>
 
 {% endblock %}
