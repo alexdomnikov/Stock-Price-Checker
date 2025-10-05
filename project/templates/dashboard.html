@@ -2,6 +2,17 @@
 {% block content %}
 
 <div class="container mt-5">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} mt-3" role="alert">
+                {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
     <div class="row justify-content-between align-items-center mb-3">
         <div class="col">
             <h2>Welcome, {{ current_user.username }}!</h2>
@@ -33,7 +44,7 @@
     </div>
 
     <!-- Watchlist Table -->
-    <div class="card shadow">
+    <div class="card shadow mb-4">
         <div class="card-header bg-dark text-white">
             <h5 class="mb-0">My Watchlist</h5>
         </div>
@@ -83,6 +94,69 @@
                     <p class="mb-0 text-muted">Your watchlist is empty. Add a stock to get started!</p>
                 </div>
             {% endif %}
+        </div>
+    </div>
+
+    <!-- Stock chart search -->
+    <div class="card shadow mb-4">
+
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">Price Chart Lookup</h5>
+        </div>
+
+        <div class="card-body">
+            <p class="card-text">
+                Enter a stock ticker and a time interval to get a price chart.
+            </p>
+
+            <!-- Users will post requests to the server. Data will be returned to /info -->
+            <form method="POST" action="info">
+                <div class="form-group">
+                    <label for="symbol">Stock Ticker</label>
+                    <input type="text" name="symbol" id="symbol" class="form-control" placeholder="e.g., AAPL" required />
+                </div>
+
+                <div class="form-group">
+                    <label>Interval</label>
+
+                    <div class="form-check">
+                        <input 
+                            class="form-check-input"
+                            type="radio" 
+                            id="daily" 
+                            name="interval" 
+                            value="TIME_SERIES_DAILY" 
+                            checked 
+                        />
+
+                        <label class="form-check-label" for="daily">Daily</label>
+                    </div>
+
+                    <div class="form-check">
+                        <input
+                            class="form-check-input"
+                            type="radio"
+                            id="weekly"
+                            name="interval"
+                            value="TIME_SERIES_WEEKLY"
+                        />
+                        <label class="form-check-label" for="weekly">Weekly</label>
+                    </div>
+
+                    <div class="form-check">
+                        <input
+                            class="form-check-input"
+                            type="radio"
+                            id="monthly"
+                            name="interval"
+                            value="TIME_SERIES_MONTHLY"
+                        />
+                        <label class="form-check-label" for="monthly">Monthly</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-dark btn-toggle-outline mt-2">Submit</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
