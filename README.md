@@ -77,14 +77,19 @@ python main.py
 ## Screenshots
 
 Index
-<img width="1431" height="780" alt="image" src="https://github.com/user-attachments/assets/898e79dd-a3cb-419a-9f13-9b9582e5379a" />
+<img width="1360" height="706" alt="index" src="https://github.com/user-attachments/assets/e72d6481-18b6-4e85-a8c5-7085b11c48bd" />
 
-Invalid ticker
-<img width="1432" height="783" alt="image" src="https://github.com/user-attachments/assets/151a564f-9f50-4280-9cc1-562f9a41964f" />
+Incorrect Password Error
+<img width="1360" height="702" alt="incorrect_password_error" src="https://github.com/user-attachments/assets/a5a1a2c1-1b14-4fd6-a337-ee499c0f9dac" />
 
-Valid ticker
-<img width="1436" height="783" alt="image" src="https://github.com/user-attachments/assets/299c695e-f718-4f5f-bee2-dfdfb65b07e2" />
+Dashboard After Successful Login
+<img width="1358" height="705" alt="watchlist" src="https://github.com/user-attachments/assets/e2f3ac7a-b973-4b54-ba6c-b92506397f4a" />
 
+Daily Price Chart After Successful Apple Query
+<img width="1362" height="709" alt="Screenshot 2025-10-06 at 12 57 33 PM" src="https://github.com/user-attachments/assets/875d3bd3-c799-43ab-acf6-265ef410972f" />
+
+API Call Limit Reached Error
+<img width="1358" height="704" alt="watchlist_error" src="https://github.com/user-attachments/assets/31e5ba21-1e62-478c-96cc-51bc69b3326f" />
 ___
 
 ## Future Plans
