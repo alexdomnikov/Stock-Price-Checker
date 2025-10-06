@@ -70,7 +70,10 @@ def update_stock_prices(user):
     stocks_to_update = [stock for stock in user.watchlist if stock.date_retrieved.date() != today]
 
     for stock in stocks_to_update:
-        # We use outputsize=full to ensure we have data for a year ago and YTD
+        # Outputsize=full gives us all daily data as far back as possible. In a future iteration, I'd prefer to restructure
+        # the db schema to be many-to-many and create a stock class with a watchlist relationship to reduce API calls (and just
+        # cache the JSON response we get from this full output). We'd then need to switch to daily updates rather than updating on users
+        # logging in (e.g., user watchlists won't trigger the updates anymore), and we could use the full daily data to make any charts we'd like.
         url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={stock.symbol}&outputsize=full&apikey={AV_KEY}"
         response = requests.get(url).json()
         

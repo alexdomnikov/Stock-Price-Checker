@@ -44,18 +44,21 @@
         <div class="container mt-5">
             <div class="row justify-content-center">
                 <div class="col-md-6">
+                                {% with messages = get_flashed_messages(with_categories=true) %}
+                                    {% if messages %}
+                                        {% for category, message in messages %}
+                                        <div class="alert alert-{{ category }} mt-3" role="alert">
+                                            {{ message }}
+                                        </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                {% endwith %}
                     <div class="card shadow">
                         <div class="card-header bg-dark text-white">
                             <h3 class="mb-0">Stock Price Checker</h3>
                         </div>
 
                         <div class="card-body">
-                            {% if error %}
-                                <div class="alert alert-danger" role="alert">
-                                    {{ error }}
-                                </div>
-                            {% endif %}
-
                             <form method="POST" action="">
                                 {{ form.hidden_tag() }}
 

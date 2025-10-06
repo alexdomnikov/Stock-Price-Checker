@@ -22,7 +22,6 @@ bp = Blueprint('routes', __name__)
 @bp.route('/', methods=['GET', 'POST'])
 def index():
     form = AuthForm()
-    error = None
 
     if form.validate_on_submit():
         username = form.username.data
@@ -38,7 +37,8 @@ def index():
                 login_user(user)
                 return redirect(url_for('routes.dashboard'))
             else:
-                error = "Failed login attempt. Username or password incorrect."
+                flash("Failed login attempt. Username of password incorrect", "danger")
+                return redirect(url_for('routes.index'))
 
         # ***REGISTRATION LOGIC***
         elif form.register_submit.data:
@@ -46,7 +46,8 @@ def index():
             existing_user = User.query.filter_by(username=username).first()
         
             if existing_user:
-                error = "Username taken. Please choose a different one."
+                flash("Username taken. Please choose a different one.", "danger")
+                return redirect(url_for('routes.index'))
             else:
                 hashed_password = bcrypt.generate_password_hash(form.password.data)
                 new_user = User(username = username, password = hashed_password)
@@ -56,7 +57,7 @@ def index():
                 login_user(new_user) # Log user in automatically, direct to dashboard.
                 return redirect(url_for('routes.dashboard')) 
         
-    return render_template("index.html", form=form, error=error)
+    return render_template("index.html", form=form)
 
 @bp.route('/info', methods=['GET', 'POST'])
 @login_required
@@ -87,6 +88,12 @@ def info():
     # Grabs data from API, converts the data in the response object to JSON
     stock_data = requests.get(url).json()
 
+    # Handling a very minor error - app would crash when we assign stock data to the time series after hitting API call limit, because
+    # we'd successfully get the company name in the earlier API call when checking ticker names but then hit the limit when querying for price data.
+    if "Information" in stock_data or "Note" in stock_data and "API key" in stock_data:
+        flash("You've hit your Alpha Vantage API call limit. Please try again tomorrow.", "danger")
+        return redirect(url_for('routes.dashboard'))
+    
     # Converts interval to proper format, grabs all data and puts it into time_series
     func_key = function_mapping[function]
     time_series = stock_data[func_key]
