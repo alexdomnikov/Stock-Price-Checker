@@ -8,12 +8,9 @@
         </div>
 
         <div class="card-body">
-            <h5 class="card-title">Company: {{ info.company_name }}</h5>
-            <h6 class="card-subtitle mb-4 text-muted">Ticker Symbol: {{ info.symbol|upper }}</h6>
-
-            <div class="text-center mb-4">
-                {{ info.graph | safe }}
-            </div>
+            <!-- Safe tells Jinja to not escape html characters in the variable. This allows raw html to render in the browser -->
+             <!-- We add this keyword because Jinja automatically escapes HTML content to prevent XSS attacks -->
+            <div>{{ graph | safe }}</div>
 
             <a href="{{ url_for('routes.dashboard') }}" class="btn btn-outline-secondary">← Go Back</a>
         </div>

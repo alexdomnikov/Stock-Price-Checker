@@ -111,13 +111,11 @@ def info():
     dates.reverse()
     prices.reverse()
 
-    graph = get_graph(dates, prices, company_name)
+    # This is a graph we get from our helper function. We get a plotly graph using plotly.io
+    graph_html = get_graph(dates, prices, company_name)
 
-    return render_template("info.html", info={
-        "company_name": company_name,
-        "symbol": symbol,
-        "graph": Markup(graph)
-    })
+    # Pass the graph we got from get_graph to the html page
+    return render_template("info.html", graph=graph_html)
     
 
 # Route for the dashboard with watchlist displayed, which is only available if logged in

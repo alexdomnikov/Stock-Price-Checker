@@ -8,29 +8,20 @@ from .routes import dt
 from . import AV_KEY, db
 
 # Third-party libraries
-import matplotlib
-# Configures matplotlib backend. 
-# Matplotlib recommends calling this before importing pyplot.
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-# import matplotlib.dates as mdates -- Use if we want more granular date formatting
 import requests
+import plotly.express as px
+import plotly.io as pio
+import pandas as pd
 
-# Helper function to create graph for when users look up a single name on the homepage
 def get_graph(dates, prices, company_name):
-    fig, ax = plt.subplots(figsize=(8, 6))
- 
-    ax.xaxis.set_tick_params(rotation=45)
-    ax.set_title(f"Stock Price of {company_name}")
-    ax.set_xlabel("Year")
-    ax.set_ylabel("Price (USD)")
-    ax.plot(dates, prices)
- 
-    buf = StringIO()
-    fig.savefig(buf, format="svg")
-    plt.close(fig)
- 
-    return buf.getvalue()
+    data = {'Date' : dates,
+            'Price' : prices}
+    df = pd.DataFrame(data)
+
+    # x and y match the keys in data
+    # Using pio so we can get an actual rendered chart in html rather than a plotly string
+    fig = px.line(df, x = 'Date', y = 'Price', title = f"Stock Price of {company_name}")
+    return pio.to_html(fig, full_html=False)
 
 # Helper function to find the closest available trading day in the past. 
 # This will be used when we add names to watchlists and when we update them on login.
