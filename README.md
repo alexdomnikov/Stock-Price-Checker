@@ -94,8 +94,10 @@ ___
 
 ## Future Plans
 I've stopped working on this project because I feel I've learned what I set out to learn. If I were to make any further changes to this project, they'd be changes that would allow for deployment and real users:
+- Currently, the project has been tested manually. If I revisit this project in the future, I'll add a suite of unit tests using a framework like PyTest to ensure reliability and make it easieer to maintain and add new features.
+- Implement a more robust database like PostgreSQL.
 - Change the database schema to be many-to-many with stocks stored and watchlists having a stock relationship, so that users don't "own" the updates on login.
-- I'd instead pull daily updates for the stocks that users are actually watching. These first two updates would limit API calls significantly. 
+- Pull daily updates for the stocks that users are actually watching, and cache the API responses for improved performance.
 - Allow user password changes, account deletion. 
 ___
 
