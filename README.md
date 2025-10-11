@@ -1,6 +1,6 @@
 # Stock-Price-Checker
 
-A simple Flask web app for creating watchlists, checking stock prices, and generating historical price charts.
+A full-stack application allowing users to save stocks to a watchlist and see interactive price charts.
 
 ## Overview
 This originally started as an introductory project where I followed a tutorial. The tutorial tutorial taught me:
